@@ -189,6 +189,7 @@ luvm()
       export MANPATH
       export LUVM_PATH="$LUVM_DIR/$VERSION/lib/luvit"
       export LUVM_BIN="$LUVM_DIR/$VERSION/bin"
+      export LUA_DIR="$LUVM_DIR/src/luvit-$VERSION/deps/luajit/src"
       echo "Now using luvit $VERSION"
     ;;
     "run" )

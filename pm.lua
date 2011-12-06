@@ -1,14 +1,14 @@
 #!/usr/bin/env luvit
 
 local Fiber = require('fiber')
-local Fs = require('fs')
+local Fs = require('./util')
 local Path = require('path')
 local Process = require('process')
 
 local d = debug
 
 -- helper to execute `cmd` in shell
-local function shell(cmd, continue)
+local function shell(cmd, callback)
   local child = Process.spawn('/bin/sh', {'-c', cmd}, {})
   child.stdout:on('data', function(data)
     print(data)
@@ -17,28 +17,20 @@ local function shell(cmd, continue)
     print(data)
   end)
   child:on('exit', function (exit_status, term_signal)
-    if continue then continue(exit_status ~= 0) end
+    if callback then callback(exit_status ~= 0) end
   end)
 end
 
 -- get archive
 -- FIXME: implement in luvit
-local function wget(url, path, continue)
-  --shell('wget -qct3 -O - ' .. url .. ' | tar -xzpf - -C ' .. path, continue)
-  --d('CP', url, path)
-  shell('cp -a /home/dvv/LUA/luvm/tests/install/repo/' .. url .. ' ' .. path, continue)
-end
-
--- drop directory
--- FIXME: should be part of Fs, along with mkdirp
-local function rm_fr(path, continue)
-  shell('rm -fr ' .. path, continue)
+local function wget(url, path, callback)
+  shell('wget -qct3 -O - ' .. url .. ' | tar -xzpf - -C ' .. path, callback)
 end
 
 --
 -- setup module located at `root`
 --
-function install(root, continue)
+function install(root, callback)
 
   Fiber.new(function(resume, wait)
     local err, result
@@ -63,7 +55,7 @@ function install(root, continue)
         err = wait()
         -- can't create modules dir? bail out
         if err and err.code ~= 'EEXIST' then
-          continue(err)
+          callback(err)
           return
         end
 
@@ -71,8 +63,12 @@ function install(root, continue)
         local mod_name, url
         for mod_name, url in pairs(config.dependencies) do
           -- try to require mod_name
-          print('Requiring ' .. mod_name)
-          result = pcall(require, mod_name)
+          if false then
+            print('Requiring ' .. mod_name)
+            result = pcall(require, mod_name)
+          else
+            result = false
+          end
           if not result then
 
             print('Installing ' .. mod_name .. ' from ' .. url)
@@ -93,16 +89,18 @@ function install(root, continue)
               wget(url, tmp_mod_path, resume)
               err = wait()
               if err then
-                rm_fr(tmp_mod_path)
                 d(err)
+                Fs.rm_fr(tmp_mod_path, resume)
+                err = wait()
               else
 
                 -- list archive entries
                 Fs.readdir(tmp_mod_path, resume)
                 err, result = wait()
                 if err then
-                  rm_fr(tmp_mod_path)
                   d(err)
+                  Fs.rm_fr(tmp_mod_path, resume)
+                  err = wait()
                 else
 
                   -- atomically move unpacked archive to proper location.
@@ -128,14 +126,15 @@ function install(root, continue)
                   end
                   err = wait()
                   if err then
-                    rm_fr(tmp_mod_path)
                     d(err)
+                    Fs.rm_fr(tmp_mod_path, resume)
+                    err = wait()
                   end
 
                   -- recursively process target module dependencies
                   install(mod_path, resume)
                   err = wait()
-                  d('Installed', err or 'OK')
+                  d('Installed', mod_name, err or 'OK')
 
                 end
               end
@@ -156,13 +155,13 @@ function install(root, continue)
     end
 
     -- setup is done
-    if type(continue) then continue() end
+    if type(callback) then callback() end
 
   end)
 
 end
 
 --
-install('/home/dvv/LUA/luvm/tests/install/N', function()
+install(Path.resolve(process.cwd(), ''), function()
   p('DONE')
 end)

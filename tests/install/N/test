@@ -1,2 +1,0 @@
-#!/usr/bin/env luvit
-p(require('mod4'))

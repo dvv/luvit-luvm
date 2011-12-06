@@ -73,13 +73,13 @@ luvm()
       echo "    luvm alias [<pattern>]       Show all aliases beginning with <pattern>"
       echo "    luvm alias <name> <version>  Set an alias named <name> pointing to <version>"
       echo "    luvm unalias <name>          Deletes the alias named <name>"
-      echo "    luvm copy-packages <version> Install global NPM packages contained in <version> to current version"
+      echo "    luvm deps                    Install packages on which current package depends"
       echo
       echo "Example:"
       echo "    luvm install 0.0.1           Install a specific version number"
       echo "    luvm use 0.0.2               Use the latest available 0.2.x release"
-      echo "    luvm run 0.4.12 myApp.js     Run myApp.js using luvit v0.4.12"
-      echo "    luvm alias default 0.4       Auto use the latest installed v0.4.x version"
+      echo "    luvm run 0.4.12 myApp.lua    Run myApp.lua using luvit 0.4.12"
+      echo "    luvm alias default 0.4       Auto use the latest installed 0.4.x version"
       echo
     ;;
     "install" )
@@ -269,6 +269,9 @@ luvm()
     ;;
     "version" )
         luvm_version $2
+    ;;
+    "deps" )
+        luvit $LUVM_DIR/pm.lua
     ;;
     * )
       luvm help

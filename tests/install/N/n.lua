@@ -5,6 +5,8 @@ local Fs = require('fs')
 local Path = require('path')
 local Process = require('process')
 
+local d = debug
+
 -- helper to execute `cmd` in shell
 local function shell(cmd, continue)
   local child = Process.spawn('/bin/sh', {'-c', cmd}, {})
@@ -15,7 +17,7 @@ local function shell(cmd, continue)
     print(data)
   end)
   child:on('exit', function (exit_status, term_signal)
-    if (continue) then continue(exit_status ~= 0) end
+    if continue then continue(exit_status ~= 0) end
   end)
 end
 
@@ -23,19 +25,14 @@ end
 -- FIXME: implement in luvit
 local function wget(url, path, continue)
   --shell('wget -qct3 -O - ' .. url .. ' | tar -xzpf - -C ' .. path, continue)
-  p('CP', url, path)
-  shell('cp -a ' .. url .. ' ' .. path, continue)
+  --d('CP', url, path)
+  shell('cp -a /home/dvv/LUA/luvm/tests/install/repo/' .. url .. ' ' .. path, continue)
 end
 
 -- drop directory
 -- FIXME: should be part of Fs, along with mkdirp
 local function rm_fr(path, continue)
   shell('rm -fr ' .. path, continue)
-end
-
--- TODO: perform cleanup
-local function fail(err)
-  error(err)
 end
 
 --
@@ -53,7 +50,7 @@ function install(root, continue)
     -- manifest is present, process it
     if not err then
       local config = require(Path.join(root, 'config'))
-      --p(config)
+      --d(config)
 
       -- modules has dependencies. fulfil them
       if config.dependencies then
@@ -61,10 +58,14 @@ function install(root, continue)
         -- create 'modules' dir
         local path = Path.join(root, 'modules')
         --err = h( Fs.mkdir, path, '0755' )
-        --Fs.mkdir(path, '0755', resume)
-        Fs.symlink('../modules', 'modules', 'r', resume)
+        Fs.mkdir(path, '0755', resume)
+        --Fs.symlink('../modules', 'modules', 'r', resume)
         err = wait()
-        if err and err.code ~= 'EEXIST' then fail(err) end
+        -- can't create modules dir? bail out
+        if err and err.code ~= 'EEXIST' then
+          continue(err)
+          return
+        end
 
         -- for each dependency
         local mod_name, url
@@ -83,61 +84,65 @@ function install(root, continue)
             -- create temporary download dir
             Fs.mkdir(tmp_mod_path, '0755', resume)
             err = wait()
-            if err and err.code ~= 'EEXIST' then fail(err) end
-
-            -- download and unpack tarball to temporary location
-            wget(url, tmp_mod_path, resume)
-            err = wait()
-            if err then
-              rm_fr(tmp_mod_path)
-              fail(err)
-            end
-
-            -- list archive entries
-            Fs.readdir(tmp_mod_path, resume)
-            err, result = wait()
-            if err then
-              rm_fr(tmp_mod_path)
-              fail(err)
-            end
-
-            -- atomically move unpacked archive to proper location.
-            -- if there's the only entry in archive, move it
-            if #result == 1 then
-              local subdir = result[1]
-              -- check if it's directory
-              Fs.stat(Path.join(tmp_mod_path, subdir), resume)
-              err, result = wait()
-              if result and result.is_directory then
-                Fs.rename(Path.join(tmp_mod_path, subdir), mod_path, resume)
-                err = wait()
-                -- remove temporary download dir (it should be empty now)
-                Fs.rmdir(tmp_mod_path, resume)
-              -- the single entry is not directory.
-              -- move the whole archive
-              else
-                Fs.rename(tmp_mod_path, mod_path, resume)
-              end
-            -- if archive contains zero or more than one entries, move the whole archive
+            -- can't create temporary dir? proceed to next dependency
+            if err and err.code ~= 'EEXIST' then
+              d(err)
             else
-              Fs.rename(tmp_mod_path, mod_path, resume)
-            end
-            err = wait()
-            if err then
-              rm_fr(tmp_mod_path)
-              fail(err)
-            end
 
-            -- recursively process target module dependencies
-            install(mod_path, resume)
-            err = wait()
-            p('Installed', err or 'OK')
+              -- download and unpack tarball to temporary location
+              wget(url, tmp_mod_path, resume)
+              err = wait()
+              if err then
+                rm_fr(tmp_mod_path)
+                d(err)
+              else
 
+                -- list archive entries
+                Fs.readdir(tmp_mod_path, resume)
+                err, result = wait()
+                if err then
+                  rm_fr(tmp_mod_path)
+                  d(err)
+                else
+
+                  -- atomically move unpacked archive to proper location.
+                  -- if there's the only entry in archive, move it
+                  if #result == 1 then
+                    local subdir = result[1]
+                    -- check if it's directory
+                    Fs.stat(Path.join(tmp_mod_path, subdir), resume)
+                    err, result = wait()
+                    if result and result.is_directory then
+                      Fs.rename(Path.join(tmp_mod_path, subdir), mod_path, resume)
+                      err = wait()
+                      -- remove temporary download dir (it should be empty now)
+                      Fs.rmdir(tmp_mod_path, resume)
+                    -- the single entry is not directory.
+                    -- move the whole archive
+                    else
+                      Fs.rename(tmp_mod_path, mod_path, resume)
+                    end
+                  -- if archive contains zero or more than one entries, move the whole archive
+                  else
+                    Fs.rename(tmp_mod_path, mod_path, resume)
+                  end
+                  err = wait()
+                  if err then
+                    rm_fr(tmp_mod_path)
+                    d(err)
+                  end
+
+                  -- recursively process target module dependencies
+                  install(mod_path, resume)
+                  err = wait()
+                  d('Installed', err or 'OK')
+
+                end
+              end
+            end
           end
-
         end
       end
-
     end
 
     -- build this module
@@ -151,7 +156,7 @@ function install(root, continue)
     end
 
     -- setup is done
-    if continue then continue() end
+    if type(continue) then continue() end
 
   end)
 

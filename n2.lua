@@ -63,8 +63,7 @@ function install(root, continue)
         -- create 'modules' dir
         local path = Path.join(root, 'modules')
         --err, result = h( Fs.mkdir, path, '0755' )
-        --Fs.mkdir(path, '0755', resume)
-        Fs.symlink('../modules', 'modules', 'r', resume)
+        Fs.mkdir(path, '0755', resume)
         err, result = wait()
         if err and err.code ~= 'EEXIST' then fail(err) end
 
@@ -72,7 +71,6 @@ function install(root, continue)
         local mod_name, url
         for mod_name, url in pairs(config.dependencies) do
           -- try to require mod_name
-          print('Requiring ' .. mod_name)
           result = pcall(require, mod_name)
           if not result then
 
@@ -105,12 +103,11 @@ function install(root, continue)
 
             -- atomically move unpacked archive to proper location.
             -- if there's the only entry in archive, move it
-            -- TODO: check if it's directory
             if #result == 1 then
               Fs.rename(Path.join(tmp_mod_path, result[1]), mod_path, resume)
-              ---err, result = wait()
+              err, result = wait()
               -- remove temporary download dir
-              ---Fs.rmdir(tmp_mod_path, resume)
+              Fs.rmdir(tmp_mod_path, resume)
             -- if archive contains zero or more than one entries, move the whole archive
             else
               Fs.rename(tmp_mod_path, mod_path, resume)

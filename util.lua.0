@@ -85,22 +85,37 @@ end
 --
 -- mimicks find
 --
+local normalize = Path.normalize
 local function find(path, match_fn, callback)
-  path = Path.normalize(path)
+  debug(path, type(path), type(match_fn), type(callback))
+  assert(type(path) == 'string')
+  assert(type(match_fn) == 'function')
+  assert(type(callback) == 'function')
+  path = normalize(path)
   Fiber.new(function(resume, wait)
-    local err, files
+    local err, stat, files
+    -- stat resolving symlinks
+    debug('STAT?', path)
+    Fs.lstat(path, resume)
+    debug('STAT!', path)
+    err, stat = wait()
+    -- stat failed -> bail out
+    if err then
+      callback(err)
+      return
+    end
     -- match
     match_fn(path, stat)
-    -- read sub-files, if any
+    -- path is not directory?
+    if not stat.is_directory then
+      callback()
+      return
+    end
+    -- path is directory. read files
     Fs.readdir(path, resume)
     err, files = wait()
     -- read error -> bail out
     if err then
-      -- ENOTDIR: current path is not directory. reset error and proceed
-      -- ENOENT: e.g. broken symlink
-      if err.code == 'ENOTDIR' or err.code == 'ENOENT' then
-        err = nil
-      end
       callback(err)
       return
     end

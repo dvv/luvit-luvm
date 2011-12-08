@@ -270,9 +270,6 @@ luvm()
     "version" )
         luvm_version $2
     ;;
-    "deps" )
-        luvit $LUVM_DIR/pm.lua
-    ;;
     * )
       luvm help
     ;;

@@ -11,9 +11,9 @@ fi
 
 # Use curl, or wget, what available
 if [ `which curl` ]; then
-  GET='curl --progress-bar'
+  GET='curl -L --progress-bar'
 else
-  GET='wget -q --progress=bar -O -'
+  GET='wget -q --progress=bar --no-check-certificate -O -'
 fi
 
 # Expand a version using the version cache
@@ -73,7 +73,6 @@ luvm()
       echo "    luvm alias [<pattern>]       Show all aliases beginning with <pattern>"
       echo "    luvm alias <name> <version>  Set an alias named <name> pointing to <version>"
       echo "    luvm unalias <name>          Deletes the alias named <name>"
-      echo "    luvm deps                    Install packages on which current package depends"
       echo
       echo "Example:"
       echo "    luvm install 0.0.1           Install a specific version number"
@@ -103,23 +102,20 @@ luvm()
         )
       then
         luvm use $VERSION
-        # TODO: a simple npm surrogate
-        #if ! which npm ; then
-        #  echo "Installing npm..."
-        #  if [[ "`expr match $VERSION '\(^0\.1\.\)'`" != '' ]]; then
-        #    echo "npm requires node v0.2.3 or higher"
-        #  elif [[ "`expr match $VERSION '\(^0\.2\.\)'`" != '' ]]; then
-        #    if [[ "`expr match $VERSION '\(^0\.2\.[0-2]$\)'`" != '' ]]; then
-        #      echo "npm requires node v0.2.3 or higher"
-        #    else
-        #      $GET http://npmjs.org/install.sh | clean=yes npm_install=0.2.19 sh
-        #    fi
-        #  else
-        #    $GET http://npmjs.org/install.sh | clean=yes sh
-        #  fi
-        #fi
       else
         echo "luvm: install $VERSION failed!"
+      fi
+    ;;
+    "heart" )
+      if ! which heart ; then
+        echo "Installing heart package manager..."
+        VERSION=`luvm_version`
+        mkdir -p "$LUVM_DIR/src" && \
+        cd "$LUVM_DIR/src" && \
+        $GET https://github.com/luvit/heart/tarball/master | tar -xzpf - && \
+        rm -fr heart && \
+        mv luvit-heart* heart && \
+        PREFIX="$LUVM_DIR/$VERSION" make -C heart install
       fi
     ;;
     "uninstall" )

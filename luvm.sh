@@ -11,7 +11,7 @@ fi
 
 # Use curl, or wget, what available
 if [ `which curl` ]; then
-  GET='curl --progress-bar'
+  GET='curl -L --progress-bar'
 else
   GET='wget -q --progress=bar -O -'
 fi
@@ -73,7 +73,8 @@ luvm()
       echo "    luvm alias [<pattern>]       Show all aliases beginning with <pattern>"
       echo "    luvm alias <name> <version>  Set an alias named <name> pointing to <version>"
       echo "    luvm unalias <name>          Deletes the alias named <name>"
-      echo "    luvm deps                    Install packages on which current package depends"
+      echo "    luvm deps                    Install packages which current package depends on"
+      echo "    luvm heart                   Install heart package manager"
       echo
       echo "Example:"
       echo "    luvm install 0.0.1           Install a specific version number"
@@ -157,12 +158,6 @@ luvm()
       else
         echo "Could not find $LUVM_DIR/*/bin in \$PATH"
       fi
-      if [[ $MANPATH == *$LUVM_DIR/*/share/man* ]]; then
-        export MANPATH=${MANPATH%$LUVM_DIR/*/share/man*}${MANPATH#*$LUVM_DIR/*/share/man:}
-        echo "$LUVM_DIR/*/share/man removed from \$MANPATH"
-      else
-        echo "Could not find $LUVM_DIR/*/share/man in \$MANPATH"
-      fi
     ;;
     "use" )
       if [ $# -ne 2 ]; then
@@ -179,14 +174,8 @@ luvm()
       else
         PATH="$LUVM_DIR/$VERSION/bin:$PATH"
       fi
-      if [[ $MANPATH == *$LUVM_DIR/*/share/man* ]]; then
-        MANPATH=${MANPATH%$LUVM_DIR/*/share/man*}$LUVM_DIR/$VERSION/share/man${MANPATH#*$LUVM_DIR/*/share/man}
-      else
-        MANPATH="$LUVM_DIR/$VERSION/share/man:$MANPATH"
-      fi
       export PATH
       hash -r
-      export MANPATH
       export LUVM_PATH="$LUVM_DIR/$VERSION/lib/luvit"
       export LUVM_BIN="$LUVM_DIR/$VERSION/bin"
       export LUA_DIR="$LUVM_DIR/src/luvit-$VERSION/deps/luajit/src"
@@ -269,6 +258,16 @@ luvm()
     ;;
     "version" )
         luvm_version $2
+    ;;
+    "heart" )
+        VERSION=`luvm_version`
+        mkdir -p "$LUVM_DIR/src" && \
+        cd "$LUVM_DIR/src" && \
+        $GET "https://github.com/dvv/heart/tarball/master" | tar -xzpf - && \
+        cd dvv-heart-* && \
+        PREFIX="$LUVM_DIR/$VERSION" make install
+        cd ..
+        rm -fr dvv-heart-*
     ;;
     * )
       luvm help

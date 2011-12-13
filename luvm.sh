@@ -103,21 +103,11 @@ luvm()
         )
       then
         luvm use $VERSION
-        # TODO: a simple npm surrogate
-        #if ! which npm ; then
-        #  echo "Installing npm..."
-        #  if [[ "`expr match $VERSION '\(^0\.1\.\)'`" != '' ]]; then
-        #    echo "npm requires node v0.2.3 or higher"
-        #  elif [[ "`expr match $VERSION '\(^0\.2\.\)'`" != '' ]]; then
-        #    if [[ "`expr match $VERSION '\(^0\.2\.[0-2]$\)'`" != '' ]]; then
-        #      echo "npm requires node v0.2.3 or higher"
-        #    else
-        #      $GET http://npmjs.org/install.sh | clean=yes npm_install=0.2.19 sh
-        #    fi
-        #  else
-        #    $GET http://npmjs.org/install.sh | clean=yes sh
-        #  fi
-        #fi
+        # install lui -- a simple npm surrogate
+        if ! which lui ; then
+          echo "Installing lui..."
+          $GET https://github.com/luvit/lui/raw/master/lui >"$LUVM_DIR/$VERSION/bin/lui"
+        fi
       else
         echo "luvm: install $VERSION failed!"
       fi

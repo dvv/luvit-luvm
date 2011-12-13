@@ -73,7 +73,6 @@ luvm()
       echo "    luvm alias [<pattern>]       Show all aliases beginning with <pattern>"
       echo "    luvm alias <name> <version>  Set an alias named <name> pointing to <version>"
       echo "    luvm unalias <name>          Deletes the alias named <name>"
-      echo "    luvm deps                    Install packages which current package depends on"
       echo "    luvm heart                   Install heart package manager"
       echo
       echo "Example:"

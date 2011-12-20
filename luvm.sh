@@ -94,7 +94,7 @@ luvm()
       if (
         mkdir -p "$LUVM_DIR/src" && \
         cd "$LUVM_DIR/src" && \
-        $GET "http://creationix.com/dist/$VERSION/luvit-$VERSION.tar.gz" | tar -xzpf - && \
+        $GET "http://luvit.io/dist/$VERSION/luvit-$VERSION.tar.gz" | tar -xzpf - && \
         cd "luvit-$VERSION" && \
         PREFIX="$LUVM_DIR/$VERSION" make && \
         rm -fr "$LUVM_DIR/$VERSION" 2>/dev/null && \
@@ -106,7 +106,8 @@ luvm()
         # install lui -- a simple npm surrogate
         if ! which lui ; then
           echo "Installing lui..."
-          $GET https://github.com/luvit/lui/raw/master/lui >"$LUVM_DIR/$VERSION/bin/lui"
+          $GET https://github.com/luvit/lui/raw/master/lui >"$LUVM_DIR/$VERSION/bin/lui" && \
+          chmod a+x "$LUVM_DIR/$VERSION/bin/lui"
         fi
       else
         echo "luvm: install $VERSION failed!"

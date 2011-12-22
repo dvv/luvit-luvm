@@ -73,7 +73,6 @@ luvm()
       echo "    luvm alias [<pattern>]       Show all aliases beginning with <pattern>"
       echo "    luvm alias <name> <version>  Set an alias named <name> pointing to <version>"
       echo "    luvm unalias <name>          Deletes the alias named <name>"
-      echo "    luvm deps                    Install packages which current package depends on"
       echo "    luvm heart                   Install heart package manager"
       echo
       echo "Example:"
@@ -95,7 +94,7 @@ luvm()
       if (
         mkdir -p "$LUVM_DIR/src" && \
         cd "$LUVM_DIR/src" && \
-        $GET "http://creationix.com/dist/$VERSION/luvit-$VERSION.tar.gz" | tar -xzpf - && \
+        $GET "http://luvit.io/dist/$VERSION/luvit-$VERSION.tar.gz" | tar -xzpf - && \
         cd "luvit-$VERSION" && \
         PREFIX="$LUVM_DIR/$VERSION" make && \
         rm -fr "$LUVM_DIR/$VERSION" 2>/dev/null && \
@@ -104,6 +103,12 @@ luvm()
         )
       then
         luvm use $VERSION
+        # install lui -- a simple npm surrogate
+        if ! which lui ; then
+          echo "Installing lui..."
+          $GET https://github.com/luvit/lui/raw/master/lui >"$LUVM_DIR/$VERSION/bin/lui" && \
+          chmod a+x "$LUVM_DIR/$VERSION/bin/lui"
+        fi
       else
         echo "luvm: install $VERSION failed!"
       fi
@@ -173,9 +178,6 @@ luvm()
       fi
       export PATH
       hash -r
-      export LUVM_PATH="$LUVM_DIR/$VERSION/lib/luvit"
-      export LUVM_BIN="$LUVM_DIR/$VERSION/bin"
-      export LUA_DIR="$LUVM_DIR/src/luvit-$VERSION/deps/luajit/src"
       echo "Now using luvit $VERSION"
     ;;
     "run" )

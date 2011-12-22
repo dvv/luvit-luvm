@@ -54,7 +54,7 @@ luvm()
 {
   if [ $# -lt 1 ]; then
     luvm help
-    return
+    return 1
   fi
   case $1 in
     "help" )
@@ -85,7 +85,7 @@ luvm()
     "install" )
       if [ $# -ne 2 ]; then
         luvm help
-        return
+        return 1
       fi
       VERSION=`luvm_version $2`
 
@@ -129,12 +129,12 @@ luvm()
       [ $# -ne 2 ] && luvm help && return
       if [[ $2 == `luvm_version` ]]; then
         echo "luvm: Cannot uninstall currently-active luvit version, $2."
-        return
+        return 1
       fi
       VERSION=`luvm_version $2`
       if [ ! -d $LUVM_DIR/$VERSION ]; then
         echo "$VERSION version is not installed yet"
-        return;
+        return 1
       fi
 
       # Delete all files related to target version.
@@ -164,12 +164,12 @@ luvm()
     "use" )
       if [ $# -ne 2 ]; then
         luvm help
-        return
+        return 1
       fi
       VERSION=`luvm_version $2`
       if [ ! -d $LUVM_DIR/$VERSION ]; then
         echo "$VERSION version is not installed yet"
-        return;
+        return 1
       fi
       if [[ $PATH == *$LUVM_DIR/*/bin* ]]; then
         PATH=${PATH%$LUVM_DIR/*/bin*}$LUVM_DIR/$VERSION/bin${PATH#*$LUVM_DIR/*/bin}
@@ -184,12 +184,12 @@ luvm()
       # run given version of luvit
       if [ $# -lt 2 ]; then
         luvm help
-        return
+        return 1
       fi
       VERSION=`luvm_version $2`
       if [ ! -d $LUVM_DIR/$VERSION ]; then
         echo "$VERSION version is not installed yet"
-        return;
+        return 1
       fi
       echo "Running luvit $VERSION"
       $LUVM_DIR/$VERSION/bin/luvit "${@:3}"
@@ -197,7 +197,7 @@ luvm()
     "ls" | "list" )
       if [ $# -ne 1 ]; then
         luvm_version $2
-        return
+        return 1
       fi
       luvm_version all
       echo -ne "current: \t"; luvm_version current
@@ -248,6 +248,7 @@ luvm()
         fi
         VERSION=`luvm_version $2`
         ROOT=`luvm use $VERSION && npm -g root`
+        # TODO
         INSTALLS=`luvm use $VERSION > /dev/null && npm -g -p ll | grep "$ROOT\/[^/]\+$" | cut -d '/' -f 8 | cut -d ":" -f 2 | grep -v npm | tr "\n" " "`
         npm install -g $INSTALLS
     ;;

@@ -197,7 +197,7 @@ luvm()
     "ls" | "list" )
       if [ $# -ne 1 ]; then
         luvm_version $2
-        return 1
+        return 0
       fi
       luvm_version all
       echo -ne "current: \t"; luvm_version current

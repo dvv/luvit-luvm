@@ -10,7 +10,7 @@ Or if you have `git` installed, then just clone it:
 
     git clone git://github.com/luvit/luvm.git ~/.luvm
 
-To activate luvm, you need to *source* it from your *bash* or (thank to @philips) *zsh* shell
+To activate luvm, you need to **source** it from your **bash** or ( thank to @philips ) **zsh** shell
 
     . ~/.luvm/luvm.sh
 

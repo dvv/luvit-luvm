@@ -94,7 +94,7 @@ luvm()
       if (
         mkdir -p "$LUVM_DIR/src" && \
         cd "$LUVM_DIR/src" && \
-        $GET "http://luvit.io/dist/$VERSION/luvit-$VERSION.tar.gz" | tar -xzpf - && \
+        eval $GET "http://luvit.io/dist/$VERSION/luvit-$VERSION.tar.gz" | tar -xzpf - && \
         cd "luvit-$VERSION" && \
         PREFIX="$LUVM_DIR/$VERSION" make && \
         rm -fr "$LUVM_DIR/$VERSION" 2>/dev/null && \
@@ -106,7 +106,7 @@ luvm()
         # install lui -- a simple npm surrogate
         if ! which lui ; then
           echo "Installing lui..."
-          $GET https://github.com/luvit/lui/raw/master/lui >"$LUVM_DIR/$VERSION/bin/lui" && \
+          eval $GET https://github.com/luvit/lui/raw/master/lui >"$LUVM_DIR/$VERSION/bin/lui" && \
           chmod a+x "$LUVM_DIR/$VERSION/bin/lui"
         fi
       else
@@ -119,7 +119,7 @@ luvm()
         VERSION=`luvm_version`
         mkdir -p "$LUVM_DIR/src" && \
         cd "$LUVM_DIR/src" && \
-        $GET https://github.com/luvit/heart/tarball/master | tar -xzpf - && \
+        eval $GET https://github.com/luvit/heart/tarball/master | tar -xzpf - && \
         rm -fr heart && \
         mv luvit-heart* heart && \
         PREFIX="$LUVM_DIR/$VERSION" make -C heart install
@@ -263,7 +263,7 @@ luvm()
         VERSION=`luvm_version`
         mkdir -p "$LUVM_DIR/src" && \
         cd "$LUVM_DIR/src" && \
-        $GET "https://github.com/dvv/heart/tarball/master" | tar -xzpf - && \
+        eval $GET "https://github.com/dvv/heart/tarball/master" | tar -xzpf - && \
         cd dvv-heart-* && \
         PREFIX="$LUVM_DIR/$VERSION" make install
         cd ..

@@ -109,6 +109,12 @@ luvm()
           eval $GET https://github.com/luvit/lui/raw/master/lui >"$LUVM_DIR/$VERSION/bin/lui" && \
           chmod a+x "$LUVM_DIR/$VERSION/bin/lui"
         fi
+        # install checkit -- a simple test runner
+        if ! which checkit ; then
+          echo "Installing checkit..."
+          eval $GET https://github.com/luvit/checkit/raw/master/checkit >"$LUVM_DIR/$VERSION/bin/checkit" && \
+          chmod a+x "$LUVM_DIR/$VERSION/bin/checkit"
+        fi
       else
         echo "luvm: install $VERSION failed!"
       fi
